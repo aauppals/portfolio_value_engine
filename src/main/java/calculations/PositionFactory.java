@@ -25,17 +25,17 @@ public class PositionFactory {
     }
 
     public Positions getPositions() {
-        return new Positions(readPositions("Positions.csv"));
+        return new Positions(readPositions());
     }
 
 
-    private Set<Position> readPositions(String filename) {
+    private Set<Position> readPositions() {
         //Todo: read csv and populate the returned hash set
         HashSet<Position> positionSet = new HashSet<>();
         BufferedReader br = null;
         try {
             String line;
-            br = new BufferedReader(new FileReader(filename));
+            br = new BufferedReader(new FileReader("Positions.csv"));
             br.readLine();
             while ((line = br.readLine()) != null) {
                 System.out.println("Raw Position data: " + line);
