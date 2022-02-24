@@ -1,17 +1,19 @@
 package calculations;
 
+import instrument.Instrument;
+
 public class PortfolioValue {
-    private final String ticker;
+    private final Instrument instrument;
     private final double value;
 
     //Todo: split value in to MV and NAV
-    public PortfolioValue(String ticker, double value) {
-        this.ticker = ticker;
+    public PortfolioValue(Instrument instrument, double value) {
+        this.instrument = instrument;
         this.value = value;
     }
 
-    public String getTicker() {
-        return ticker;
+    public Instrument getInstrument() {
+        return instrument;
     }
 
     public double getValue() {

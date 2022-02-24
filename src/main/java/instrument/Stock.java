@@ -1,14 +1,24 @@
 package instrument;
 
-public class Stock extends Instrument {
-    private final double volatility;
+import java.util.Objects;
 
-    public double getVolatility() {
-        return volatility;
+public class Stock extends Instrument {
+    public Stock(String ticker) {
+        super(ticker);
     }
 
-    public Stock(String ticker, double volatility) {
-        super(ticker);
-        this.volatility = volatility;
+    @Override
+    public int hashCode() {
+        return super.hashCode();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        return super.equals(obj);
+    }
+
+    @Override
+    public String toString() {
+        return super.toString();
     }
 }

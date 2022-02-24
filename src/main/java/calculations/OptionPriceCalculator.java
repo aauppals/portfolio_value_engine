@@ -9,7 +9,7 @@ import java.util.function.Consumer;
 
 public class OptionPriceCalculator extends UnaryPubSub<Set<PriceUpdate>> implements Consumer<Set<PriceUpdate>> {
 
-    public OptionPriceCalculator(PortfolioValueCalculator listener) {
+    public OptionPriceCalculator(Consumer<Set<PriceUpdate>> listener) {
         super(Collections.singletonList(listener));
     }
 

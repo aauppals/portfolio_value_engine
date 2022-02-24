@@ -1,5 +1,6 @@
 import calculations.OptionPriceCalculator;
 import calculations.PortfolioValueCalculator;
+import calculations.PositionFactory;
 import calculations.Positions;
 import marketdata.MarketDataSource;
 import marketdata.PriceUpdate;
@@ -12,7 +13,8 @@ import java.util.function.Consumer;
 
 public class PortfolioValueEngine {
     public static void main(String[] args) {
-        Positions positions = new Positions();
+//        PositionFactory.
+        Positions positions = new Positions(null);
         ConsolePortfolioValueListener consolePortfolioValueListener = new ConsolePortfolioValueListener();
         PortfolioValueCalculator portfolioValueCalculator = new PortfolioValueCalculator(consolePortfolioValueListener, positions);
         OptionPriceCalculator optionPriceCalculator = new OptionPriceCalculator(portfolioValueCalculator);
