@@ -30,15 +30,13 @@ public class PositionFactory {
 
 
     private Set<Position> readPositions() {
-        //Todo: read csv and populate the returned hash set
         HashSet<Position> positionSet = new HashSet<>();
         BufferedReader br = null;
         try {
             String line;
-            br = new BufferedReader(new FileReader("Positions.csv"));
+            br = new BufferedReader(new FileReader("Positions.csv")); //TOdo: inject file path & in tests make file in tmp
             br.readLine();
             while ((line = br.readLine()) != null) {
-                System.out.println("Raw Position data: " + line);
                 final String[] splitData = line.split(",");
                 final String ticker = splitData[0];
                 final long amount = Long.parseLong(splitData[1]);
@@ -53,7 +51,6 @@ public class PositionFactory {
                 fileException.printStackTrace();
             }
         }
-        //System.out.println(positionSet);
         return positionSet;
     }
 
