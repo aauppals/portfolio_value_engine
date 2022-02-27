@@ -1,7 +1,4 @@
-import calculations.OptionPriceCalculator;
-import calculations.PortfolioValueCalculator;
-import calculations.PositionFactory;
-import calculations.Positions;
+import calculations.*;
 import marketdata.MarketDataSource;
 import marketdata.PriceUpdate;
 
@@ -23,8 +20,11 @@ public class PortfolioValueEngine {
         marketDataListeners.add(optionPriceCalculator);
         MarketDataSource marketDataSource = new MarketDataSource(marketDataListeners);
 
+
         //Todo: run this on a separate thread
         marketDataSource.run();
+
+        InstrumentDefinitionProvider instrumentDefinitionProvider = new InstrumentDefinitionProvider();
 
     }
 }
