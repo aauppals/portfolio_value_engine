@@ -22,7 +22,6 @@ public class Positions {
         this.positions = positions;//ImmutableSet.copyOf(positions);
     }
 
-
     public Set<Position> getPositions() {
         return positions;
     }

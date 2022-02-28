@@ -3,6 +3,8 @@ package calculations;
 import infra.UnaryPubSub;
 import marketdata.PriceUpdate;
 
+import java.util.Random;
+
 import java.util.Collections;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -17,7 +19,6 @@ public class OptionPriceCalculator extends UnaryPubSub<Set<PriceUpdate>> impleme
     public void accept(Set<PriceUpdate> priceUpdates) {
         //Todo: calculate and return price of instrument
         System.out.println("new option prices update");
-
         update(priceUpdates);
     }
 }

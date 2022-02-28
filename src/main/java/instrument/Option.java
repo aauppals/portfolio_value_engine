@@ -9,12 +9,14 @@ public class Option extends Instrument{
     //Todo: convert volatility from static to realtime
     private final double strikePrice;
     private final OptionType optionType;
+    private final Stock underlying;
 
-    public Option(String ticker, Instant maturityDate, double strikePrice, OptionType optionType) {
+    public Option(String ticker, Instant maturityDate, double strikePrice, OptionType optionType, Stock underlying) {
         super(ticker);
         this.maturityDate = maturityDate;
         this.strikePrice = strikePrice;
         this.optionType = optionType;
+        this.underlying = underlying;
     }
 
     public Instant getMaturityDate() {

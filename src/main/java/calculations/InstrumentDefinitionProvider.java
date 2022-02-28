@@ -1,6 +1,9 @@
 package calculations;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.sql.*;
+import java.util.ArrayList;
 
 public class InstrumentDefinitionProvider {
     private static Connection conn;
@@ -101,6 +104,26 @@ public class InstrumentDefinitionProvider {
         }
     }
 
+    public static void updateStockPriceByTicker(String fileName, String ticker, double price) {
+        String sql = "UPDATE Stocks SET price = ? WHERE ticker = ?";
+
+        try {
+            String dbPath = "jdbc:sqlite:C:/Users/N B C/Desktop/portfolio_value_engine/" + fileName;
+            try {
+                conn = DriverManager.getConnection(dbPath);
+            } catch (SQLException e) {
+                System.out.println(e.getMessage());
+            }
+
+            PreparedStatement preparedStatement = conn.prepareStatement(sql);
+            preparedStatement.setDouble(1, price);
+            preparedStatement.setString(2, ticker);
+            preparedStatement.executeUpdate();
+        } catch (SQLException e) {
+            System.out.println(e.getMessage());
+        }
+    }
+
     public static void insertOptions(String fileName, String ticker, String maturityDate, double strikePrice,
                                      String optionType, double interestRate, double volatility) {
 
@@ -126,6 +149,32 @@ public class InstrumentDefinitionProvider {
         } catch (SQLException e) {
             System.out.println(e.getMessage());
         }
+    }
+
+    public static CalcObject getStockByTicker(String fileName, String ticker) {
+        String url = "jdbc:sqlite:C:/Users/N B C/Desktop/portfolio_value_engine/" + fileName;
+        try {
+            conn = DriverManager.getConnection(url);
+        } catch (SQLException e) {
+            System.out.println(e.getMessage());
+        }
+        String sql = "SELECT price,expectedReturn,volatility from STOCKS WHERE ticker = ?";
+        CalcObject calcObject = null;
+        try {
+            PreparedStatement preparedStatement = conn.prepareStatement(sql);
+            preparedStatement.setString(1, ticker);
+            // loop through the result set
+            ResultSet resultSet = preparedStatement.executeQuery();
+
+            while (resultSet.next()) {
+                calcObject = new CalcObject((resultSet.getDouble("price")),
+                        resultSet.getDouble("expectedReturn"),
+                        resultSet.getDouble("volatility"));
+            }
+        } catch (SQLException e) {
+            System.out.println(e.getMessage());
+        }
+        return calcObject;
     }
 
     public static void getAllStocks(String fileName) {
@@ -155,6 +204,31 @@ public class InstrumentDefinitionProvider {
         }
     }
 
+    public static @NotNull
+    ArrayList<String> getAllStockTickers(String fileName) {
+
+        String url = "jdbc:sqlite:C:/Users/N B C/Desktop/portfolio_value_engine/" + fileName;
+        try {
+            conn = DriverManager.getConnection(url);
+        } catch (SQLException e) {
+            System.out.println(e.getMessage());
+        }
+
+        String sql = "SELECT ticker FROM Stocks";
+        ArrayList<String> tickers = new ArrayList<>();
+        try {
+            Statement statement = conn.createStatement();
+            ResultSet resultSet = statement.executeQuery(sql);
+
+            // loop through the result set
+            while (resultSet.next()) {
+                tickers.add(resultSet.getString("ticker"));
+            }
+        } catch (SQLException e) {
+            System.out.println(e.getMessage());
+        }
+        return tickers;
+    }
 
     public static void deleteAllStocks(String fileName) {
         String url = "jdbc:sqlite:C:/Users/N B C/Desktop/portfolio_value_engine/" + fileName;

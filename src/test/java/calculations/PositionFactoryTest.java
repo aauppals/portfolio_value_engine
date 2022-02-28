@@ -22,12 +22,13 @@ public class PositionFactoryTest {
     //TODO: user before to create dummy positions csv in tmp dir
     private final InstantParser instantParserMock = mock(InstantParser.class);
     private final Instant time = new InstantParser().getInstant("OCT", "2020");
-    private final Instrument instrument1 = new Stock("AAPL");
-    private final Instrument instrument2 = new Option("AAPL",time,110, OptionType.CALL);
-    private final Instrument instrument3 = new Option("TELSA",time,400,OptionType.PUT);
-    private final Position position1 = new Position(1000,instrument1);
-    private final Position position2 = new Position(-20000,instrument2);
-    private final Position position3 = new Position(-10000,instrument3);
+    private final Stock stock1 = new Stock("AAPL");
+    private final Stock stock2 = new Stock("TESLA");
+    private final Instrument instrument2 = new Option("AAPL", time, 110, OptionType.CALL, stock1);
+    private final Instrument instrument3 = new Option("TELSA", time, 400, OptionType.PUT, stock2);
+    private final Position position1 = new Position(1000, stock1);
+    private final Position position2 = new Position(-20000, instrument2);
+    private final Position position3 = new Position(-10000, instrument3);
 
     @BeforeAll
     public static void createDummyCSV() {
@@ -51,14 +52,14 @@ public class PositionFactoryTest {
     @Test
     public void test_PositionFactory_readsCSV() {
         when(this.instantParserMock.getInstant(anyString(), anyString())).thenReturn(time);
-        final PositionFactory positionFactory = new PositionFactory(this.instantParserMock);
+        final PositionFactory positionFactory = new PositionFactory();
         final Positions actualPositions = positionFactory.getPositions();
         assertEquals(actualPositions.getPositions().size(), 3);
         Set<Position> expectedPositions = new HashSet<>();
         expectedPositions.add(position1);
         expectedPositions.add(position2);
         expectedPositions.add(position3);
-        assertEquals(expectedPositions,actualPositions.getPositions());
+        assertEquals(expectedPositions, actualPositions.getPositions());
     }
 
 }

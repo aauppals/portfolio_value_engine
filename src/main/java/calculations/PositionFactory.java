@@ -18,16 +18,11 @@ public class PositionFactory {
 
     private static final String OPTION_IDENTIFIER = "-";
     public static final int OPTION_TICKER_DASHES = 4;
-    private final InstantParser instantParser;
 
-    public PositionFactory(InstantParser instantParser) {
-        this.instantParser = instantParser;
-    }
 
     public Positions getPositions() {
         return new Positions(readPositions());
     }
-
 
     private Set<Position> readPositions() {
         HashSet<Position> positionSet = new HashSet<>();
@@ -58,10 +53,8 @@ public class PositionFactory {
         if (isTickerOption(tickerText)) {
             String[] split = tickerText.split(OPTION_IDENTIFIER);
             final String name = split[0];
-            final Instant maturityDate = instantParser.getInstant(split[1], split[2]);
             final double strikePrice = parseDouble(split[3]);
             final OptionType optionType = OptionType.fromText(split[4]);
-            return new Option(name, maturityDate, strikePrice, optionType);
         }
         return new Stock(tickerText);
     }
