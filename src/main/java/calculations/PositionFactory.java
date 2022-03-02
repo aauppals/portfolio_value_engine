@@ -1,23 +1,19 @@
 package calculations;
 
 import instrument.Instrument;
-import instrument.Option;
-import instrument.OptionType;
-import instrument.Stock;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
-import java.time.Instant;
 import java.util.HashSet;
 import java.util.Set;
 
-import static java.lang.Double.parseDouble;
-
 public class PositionFactory {
+    private final InstrumentDefinitionProvider instrumentDefinitionProvider;
 
-    private static final String OPTION_IDENTIFIER = "-";
-    public static final int OPTION_TICKER_DASHES = 4;
+    public PositionFactory(InstrumentDefinitionProvider instrumentDefinitionProvider) {
+        this.instrumentDefinitionProvider = instrumentDefinitionProvider;
+    }
 
 
     public Positions getPositions() {
@@ -29,13 +25,14 @@ public class PositionFactory {
         BufferedReader br = null;
         try {
             String line;
-            br = new BufferedReader(new FileReader("Positions.csv")); //TOdo: inject file path & in tests make file in tmp
+            br = new BufferedReader(new FileReader("Positions.csv"));
             br.readLine();
             while ((line = br.readLine()) != null) {
                 final String[] splitData = line.split(",");
                 final String ticker = splitData[0];
                 final long amount = Long.parseLong(splitData[1]);
-                positionSet.add(new Position(amount, getInstrument(ticker)));
+                Instrument instrumentByTicker = instrumentDefinitionProvider.getInstrumentByTicker(ticker);
+                positionSet.add(new Position(amount, instrumentByTicker));
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -48,24 +45,4 @@ public class PositionFactory {
         }
         return positionSet;
     }
-
-    private Instrument getInstrument(String tickerText) {
-        if (isTickerOption(tickerText)) {
-            String[] split = tickerText.split(OPTION_IDENTIFIER);
-            final String name = split[0];
-            final double strikePrice = parseDouble(split[3]);
-            final OptionType optionType = OptionType.fromText(split[4]);
-        }
-        return new Stock(tickerText);
-    }
-
-    private boolean isTickerOption(String tickerText) {
-        return tickerText.contains(OPTION_IDENTIFIER)
-                && getNumberOfOccurrences(OPTION_IDENTIFIER, tickerText) == OPTION_TICKER_DASHES;
-    }
-
-    private int getNumberOfOccurrences(final String substring, final String string) {
-        return string.length() - string.replace(substring, "").length();
-    }
-
 }

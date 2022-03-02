@@ -1,38 +1,49 @@
 package calculations;
 
-import instrument.Instrument;
+import instrument.Option;
+import instrument.OptionType;
+import instrument.Stock;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.*;
-
 import java.io.File;
+import java.io.IOException;
 import java.sql.SQLException;
+import java.time.Instant;
+
+import static org.apache.commons.io.FileUtils.forceDelete;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 
 public class InstrumentDefinitionProviderTest {
+    private static InstrumentDefinitionProvider instrumentDefinitionProvider;
 
-    @Test
-    public void WHEN_DB_is_created_THEN_DB_file_is_created() throws ClassNotFoundException {
-        InstrumentDefinitionProvider.createNewDatabase("Test.db");
-        File file = new File("C:/Users/N B C/Desktop/portfolio_value_engine/Test.db");
-        assertTrue(file.exists());
+    @BeforeAll
+    @SuppressWarnings("unused")
+    static void createDataBase() throws IOException {
+        instrumentDefinitionProvider = new InstrumentDefinitionProvider();
+    }
+
+    @AfterAll
+    static void closeDatabaseConnection() throws SQLException, IOException {
+        instrumentDefinitionProvider.closeConnection();
+        forceDelete(new File(InstrumentDefinitionProvider.INSTRUMENTS_DB_FILE_NAME));
     }
 
     @Test
-    public void WHEN_table_is_created_and_records_inserted_THEN_correct_entries_are_made() {
-        InstrumentDefinitionProvider.deleteAllStocks("Test.db");
-        InstrumentDefinitionProvider.deleteAllOptions("Test.db");
-        InstrumentDefinitionProvider.createNewTable("Test.db");
-        InstrumentDefinitionProvider.insertStocks("Test.db", "AAPL", 50, 0.5, 0.5);
-        InstrumentDefinitionProvider.insertStocks("Test.db", "TELSA", 75, 0.75, 0.75);
-        InstrumentDefinitionProvider.insertOptions("Test.db", "AAPL", "OCT-2020", 110, "C", 0.02, 0.01);
-        InstrumentDefinitionProvider.insertOptions("Test.db", "AAPL", "OCT-2020", 110, "P", 0.02, 0.01);
-        InstrumentDefinitionProvider.insertOptions("Test.db", "TELSA", "OCT-2020", 400, "C", 0.02, 0.01);
-        InstrumentDefinitionProvider.insertOptions("Test.db", "TELSA", "OCT-2020", 400, "P", 0.02, 0.01);
+    public void WHEN_table_is_created_and_records_inserted_THEN_correct_entries_queryable() {
+        instrumentDefinitionProvider.createInstrumentTables();
+        Stock expectedStock = new Stock("AAPL", 0.5);
+        instrumentDefinitionProvider.insertStocks("AAPL", 0.5);
+        instrumentDefinitionProvider.insertStocks("TELSA", 0.75);
 
-//        InstrumentDefinitionProvider.getAllStocks("Test.db");
-        InstrumentDefinitionProvider.getStockByTicker("Test.db", "AAPL");
-//        InstrumentDefinitionProvider.getAllOptions("Test.db");
+        Stock actualStock = (Stock) instrumentDefinitionProvider.getInstrumentByTicker("AAPL");
+        assertEquals(expectedStock, actualStock);
 
+        Option expectedOption = new Option("AAPL-OCT-2025-110-C", Instant.parse("2022-04-01T13:44:14.504Z"), 110, OptionType.CALL, expectedStock);
+        instrumentDefinitionProvider.insertOptions("AAPL-OCT-2025-110-C", "2022-04-01T13:44:14.504Z", 110, OptionType.CALL, "AAPL");
+        Option actualOption = (Option) instrumentDefinitionProvider.getInstrumentByTicker("AAPL-OCT-2025-110-C");
+        assertEquals(expectedOption, actualOption);
     }
-
 }

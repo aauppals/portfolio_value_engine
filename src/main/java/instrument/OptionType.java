@@ -3,8 +3,8 @@ package instrument;
 import java.util.Arrays;
 
 public enum OptionType {
-    CALL("C"),
-    PUT("P");
+    CALL("CALL"),
+    PUT("PUT");
     private final String text;
 
     OptionType(String t) {

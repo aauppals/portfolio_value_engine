@@ -1,28 +1,22 @@
 package calculations;
 
-import com.opencsv.CSVReader;
-
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.IOException;
-
-import com.google.common.collect.ImmutableSet;
-import instrument.Option;
-import javafx.geometry.Pos;
-
-import java.util.HashSet;
-import java.util.Objects;
-import java.util.Set;
+import javax.annotation.Nullable;
+import java.util.*;
 
 public class Positions {
 
-    private final Set<Position> positions;
+    private final Map<String, Position> positions = new HashMap<>();
 
-    public Positions(final Set<Position> positions) {
-        this.positions = positions;//ImmutableSet.copyOf(positions);
+    public Positions(final Set<Position> positionSet) {
+        positionSet.forEach(p -> this.positions.put(p.getInstrument().getTicker(), p));
     }
 
-    public Set<Position> getPositions() {
+    @Nullable
+    public Position getPosition(String ticker) {
+        return positions.get(ticker);
+    }
+
+    public Map<String, Position> getPositions() {
         return positions;
     }
 }

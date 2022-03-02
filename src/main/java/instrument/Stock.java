@@ -1,10 +1,14 @@
 package instrument;
 
-import java.util.Objects;
-
 public class Stock extends Instrument {
-    public Stock(String ticker) {
+    private final double volatility;
+    public Stock(String ticker, double volatility) {
         super(ticker);
+        this.volatility = volatility;
+    }
+
+    public double getVolatility() {
+        return volatility;
     }
 
     @Override

@@ -8,6 +8,8 @@ public class ConsolePortfolioValueListener implements Consumer<Set<PortfolioValu
     public void accept(Set<PortfolioValue> portfolioValueSet) {
         //Todo: pretty print
         System.out.println("final pretty print");
-
+        for (PortfolioValue portfolioValue : portfolioValueSet) {
+//            System.out.println(portfolioValue.toString());
+        }
     }
 }

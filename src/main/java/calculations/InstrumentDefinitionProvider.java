@@ -1,45 +1,67 @@
 package calculations;
 
+import com.google.common.annotations.VisibleForTesting;
+import instrument.Instrument;
+import instrument.Option;
+import instrument.OptionType;
+import instrument.Stock;
+import org.apache.commons.io.FileUtils;
 import org.jetbrains.annotations.NotNull;
 
+import javax.annotation.Nullable;
+import java.io.File;
+import java.io.IOException;
 import java.sql.*;
+import java.time.Instant;
 import java.util.ArrayList;
+import java.util.List;
+
+import static org.apache.commons.io.FileUtils.forceDelete;
 
 public class InstrumentDefinitionProvider {
-    private static Connection conn;
+    public static final String INSTRUMENTS_DB_FILE_NAME = "Instruments.db";
+    @VisibleForTesting
+    static final String DATABASE_LOCATION = "jdbc:sqlite:" + INSTRUMENTS_DB_FILE_NAME;
+    private final File databaseFile = new File(INSTRUMENTS_DB_FILE_NAME);
+    //assumption: we assume option names at least 1 hyphen in them
+    private static final String OPTION_IDENTIFIER = "-";
+    private volatile boolean connectionOpened = false;
 
-    public static void createNewDatabase(String fileName) throws ClassNotFoundException {
+    private Connection conn;
+
+    public InstrumentDefinitionProvider() throws IOException {
+        boolean exists = databaseFile.exists();
+        if (exists) {
+            forceDelete(databaseFile);
+        }
+        createNewDatabase();
+    }
+
+    private void createNewDatabase() {
         try {
             Class.forName("org.sqlite.JDBC").newInstance();
         } catch (Exception e) {
             e.printStackTrace();
         }
-        String dbPath = "jdbc:sqlite:C:/Users/N B C/Desktop/portfolio_value_engine/" + fileName;
-
-        try {
-            Connection connection = DriverManager.getConnection(dbPath);
-            if (connection == null) {
-                throw new RuntimeException("Unable to make connection");
-            }
-        } catch (SQLException e) {
-            System.out.println(e.getMessage());
+        this.conn = connect();
+        if (this.conn == null) {
+            throw new RuntimeException("Unable to make connection");
         }
+        this.connectionOpened = true;
     }
 
-    public static void createNewTable(String fileName) {
-        //ToDo: Path below is hardcoded at the moment
-        String dbPath = "jdbc:sqlite:C:/Users/N B C/Desktop/portfolio_value_engine/" + fileName;
+    public void closeConnection() throws SQLException {
+        this.conn.close();
+        this.connectionOpened = false;
+    }
 
+    public void createInstrumentTables() {
         String sqlStocks = "CREATE TABLE IF NOT EXISTS Stocks(\n"
-                + " id integer PRIMARY KEY,\n"
-                + " ticker text NOT NULL,\n"
-                + " price real,\n"
-                + " expectedReturn real,\n"
+                + " ticker text PRIMARY KEY,\n"
                 + " volatility real\n"
                 + ");";
 
         try {
-            Connection conn = DriverManager.getConnection(dbPath);
             Statement stmt = conn.createStatement();
             stmt.execute(sqlStocks);
         } catch (SQLException e) {
@@ -47,17 +69,13 @@ public class InstrumentDefinitionProvider {
         }
 
         String sqlOptions = "CREATE TABLE IF NOT EXISTS Options(\n"
-                + " id integer PRIMARY KEY,\n"
-                + " ticker text NOT NULL,\n"
+                + " ticker text PRIMARY KEY,\n"
                 + " maturityDate text NOT NULL,\n"
                 + " strikePrice real NOT NULL,\n"
                 + " optionType text NOT NULL,\n"
-                + " interestRate real,\n"
-                + " volatility real\n"
+                + " underlyingStock text NOT NULL\n"
                 + ");";
-
         try {
-            Connection conn = DriverManager.getConnection(dbPath);
             Statement stmt = conn.createStatement();
             stmt.execute(sqlOptions);
         } catch (SQLException e) {
@@ -65,85 +83,53 @@ public class InstrumentDefinitionProvider {
         }
     }
 
-//    private static Connection connection() {
-//        String dbPath = "jdbc:sqlite:C:/Users/N B C/Desktop/portfolio_value_engine/Test.db";
-//        try {
-//            conn = DriverManager.getConnection(dbPath);
-//        } catch (SQLException e) {
-//            throw new RuntimeException(e);
-//        }
-//        return conn;
-//    }
-//
-//    private static void ensureConnectionOpened() throws SQLException {
-//        if (conn.isClosed()) {
-//            connection();
-//        }
-//    }
+    private static Connection connect() {
+        try {
+            return DriverManager.getConnection(DATABASE_LOCATION);
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
-    public static void insertStocks(String fileName, String ticker, double price, double expectedReturn, double volatility) {
-        String sql = "INSERT INTO Stocks(ticker, price, expectedReturn, volatility) VALUES(?,?,?,?)";
+    private void ensureConnectionOpened() throws SQLException {
+        if (conn.isClosed()) {
+            conn = connect();
+        }
+    }
+
+    public Instrument getInstrumentByTicker(String ticker) {
+        if (ticker.contains(OPTION_IDENTIFIER)) {
+            return getOptionByTicker(ticker);
+        }
+        return getStockByTicker(ticker);
+    }
+
+    public void insertStocks(String ticker, double volatility) {
+        String sql = "INSERT INTO Stocks(ticker, volatility) VALUES(?,?)";
 
         try {
             //ensureConnectionOpened();
-            String dbPath = "jdbc:sqlite:C:/Users/N B C/Desktop/portfolio_value_engine/" + fileName;
-            try {
-                conn = DriverManager.getConnection(dbPath);
-            } catch (SQLException e) {
-                System.out.println(e.getMessage());
-            }
-
             PreparedStatement preparedStatement = conn.prepareStatement(sql);
             preparedStatement.setString(1, ticker);
-            preparedStatement.setDouble(2, price);
-            preparedStatement.setDouble(3, expectedReturn);
-            preparedStatement.setDouble(4, volatility);
+            preparedStatement.setDouble(2, volatility);
             preparedStatement.executeUpdate();
         } catch (SQLException e) {
             System.out.println(e.getMessage());
         }
     }
 
-    public static void updateStockPriceByTicker(String fileName, String ticker, double price) {
-        String sql = "UPDATE Stocks SET price = ? WHERE ticker = ?";
+    public void insertOptions(String ticker, String maturityDate, double strikePrice,
+                              OptionType optionType, String underlyingStock) {
+        String sql = "INSERT INTO Options(ticker, maturityDate, strikePrice, optionType, underlyingStock) VALUES(?,?,?,?,?)";
 
         try {
-            String dbPath = "jdbc:sqlite:C:/Users/N B C/Desktop/portfolio_value_engine/" + fileName;
-            try {
-                conn = DriverManager.getConnection(dbPath);
-            } catch (SQLException e) {
-                System.out.println(e.getMessage());
-            }
-
-            PreparedStatement preparedStatement = conn.prepareStatement(sql);
-            preparedStatement.setDouble(1, price);
-            preparedStatement.setString(2, ticker);
-            preparedStatement.executeUpdate();
-        } catch (SQLException e) {
-            System.out.println(e.getMessage());
-        }
-    }
-
-    public static void insertOptions(String fileName, String ticker, String maturityDate, double strikePrice,
-                                     String optionType, double interestRate, double volatility) {
-
-        String sql = "INSERT INTO Options(ticker, maturityDate, strikePrice, optionType, interestRate, volatility) VALUES(?,?,?,?,?,?)";
-
-        try {
-//            ensureConnectionOpened();
-            String url = "jdbc:sqlite:C:/Users/N B C/Desktop/portfolio_value_engine/" + fileName;
-            try {
-                conn = DriverManager.getConnection(url);
-            } catch (SQLException e) {
-                System.out.println(e.getMessage());
-            }
+            ensureConnectionOpened();
             PreparedStatement preparedStatement = conn.prepareStatement(sql);
             preparedStatement.setString(1, ticker);
             preparedStatement.setString(2, maturityDate);
             preparedStatement.setDouble(3, strikePrice);
-            preparedStatement.setString(4, optionType);
-            preparedStatement.setDouble(5, interestRate);
-            preparedStatement.setDouble(6, volatility);
+            preparedStatement.setString(4, optionType.toString());
+            preparedStatement.setString(5, underlyingStock);
             preparedStatement.executeUpdate();
 
         } catch (SQLException e) {
@@ -151,76 +137,72 @@ public class InstrumentDefinitionProvider {
         }
     }
 
-    public static CalcObject getStockByTicker(String fileName, String ticker) {
-        String url = "jdbc:sqlite:C:/Users/N B C/Desktop/portfolio_value_engine/" + fileName;
-        try {
-            conn = DriverManager.getConnection(url);
-        } catch (SQLException e) {
-            System.out.println(e.getMessage());
-        }
-        String sql = "SELECT price,expectedReturn,volatility from STOCKS WHERE ticker = ?";
-        CalcObject calcObject = null;
+    private Stock getStockByTicker(String ticker) {
+        String sql = "SELECT ticker, volatility from Stocks WHERE ticker = ?";
+        Stock stock = null;
         try {
             PreparedStatement preparedStatement = conn.prepareStatement(sql);
             preparedStatement.setString(1, ticker);
-            // loop through the result set
+            ResultSet resultSet = preparedStatement.executeQuery();
+            while (resultSet.next()) {
+                stock = new Stock(ticker, resultSet.getDouble("volatility"));
+            }
+        } catch (SQLException e) {
+            System.out.println(e.getMessage());
+        }
+        return stock;
+    }
+
+    private Option getOptionByTicker(String ticker) {
+        String sql = "SELECT ticker, maturityDate, strikePrice, optionType, underlyingStock " +
+                "FROM Options WHERE ticker = ?";
+        Option option = null;
+        try {
+            PreparedStatement preparedStatement = conn.prepareStatement(sql);
+            preparedStatement.setString(1, ticker);
             ResultSet resultSet = preparedStatement.executeQuery();
 
             while (resultSet.next()) {
-                calcObject = new CalcObject((resultSet.getDouble("price")),
-                        resultSet.getDouble("expectedReturn"),
-                        resultSet.getDouble("volatility"));
+                option = new Option(ticker,
+                        Instant.parse(resultSet.getString("maturityDate")),
+                        resultSet.getDouble("strikePrice"),
+                        OptionType.fromText(resultSet.getString("optionType")),
+                        getStockByTicker(resultSet.getString("underlyingStock")));
             }
         } catch (SQLException e) {
             System.out.println(e.getMessage());
         }
-        return calcObject;
+        return option;
     }
 
-    public static void getAllStocks(String fileName) {
-
-        String url = "jdbc:sqlite:C:/Users/N B C/Desktop/portfolio_value_engine/" + fileName;
+    public List<Option> getOptionByUnderlyingStock(String underlyingStock) {
+        String sql = "SELECT ticker, maturityDate, strikePrice, optionType, underlyingStock " +
+                "FROM Options WHERE underlyingStock = ?";
+        final List<Option> result = new ArrayList<>();
         try {
-            conn = DriverManager.getConnection(url);
-        } catch (SQLException e) {
-            System.out.println(e.getMessage());
-        }
-
-        String sql = "SELECT * FROM Stocks";
-        try {
-            Statement statement = conn.createStatement();
-            ResultSet resultSet = statement.executeQuery(sql);
-
-            // loop through the result set
+            PreparedStatement preparedStatement = conn.prepareStatement(sql);
+            preparedStatement.setString(1, underlyingStock);
+            ResultSet resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
-                System.out.println(resultSet.getInt("id") + "\t" +
-                        resultSet.getString("ticker") + "\t" +
-                        resultSet.getDouble("price") + "\t" +
-                        resultSet.getDouble("expectedReturn") + "\t" +
-                        resultSet.getDouble("volatility"));
+                result.add(new Option(resultSet.getString("ticker"),
+                        Instant.parse(resultSet.getString("maturityDate")),
+                        resultSet.getDouble("strikePrice"),
+                        OptionType.fromText(resultSet.getString("optionType")),
+                        getStockByTicker(resultSet.getString("underlyingStock"))));
             }
         } catch (SQLException e) {
             System.out.println(e.getMessage());
         }
+        return result;
     }
 
-    public static @NotNull
-    ArrayList<String> getAllStockTickers(String fileName) {
-
-        String url = "jdbc:sqlite:C:/Users/N B C/Desktop/portfolio_value_engine/" + fileName;
-        try {
-            conn = DriverManager.getConnection(url);
-        } catch (SQLException e) {
-            System.out.println(e.getMessage());
-        }
-
+    @NotNull
+    public ArrayList<String> getAllStockTickers() {
         String sql = "SELECT ticker FROM Stocks";
         ArrayList<String> tickers = new ArrayList<>();
         try {
             Statement statement = conn.createStatement();
             ResultSet resultSet = statement.executeQuery(sql);
-
-            // loop through the result set
             while (resultSet.next()) {
                 tickers.add(resultSet.getString("ticker"));
             }
@@ -229,71 +211,6 @@ public class InstrumentDefinitionProvider {
         }
         return tickers;
     }
-
-    public static void deleteAllStocks(String fileName) {
-        String url = "jdbc:sqlite:C:/Users/N B C/Desktop/portfolio_value_engine/" + fileName;
-        try {
-            conn = DriverManager.getConnection(url);
-        } catch (SQLException e) {
-            System.out.println(e.getMessage());
-        }
-        String sql = "DELETE FROM Stocks";
-        try {
-            Statement statement = conn.createStatement();
-            statement.executeUpdate(sql);
-        } catch (SQLException e) {
-            System.out.println(e.getMessage());
-        }
-    }
-
-
-    public static void getAllOptions(String fileName) {
-
-        String url = "jdbc:sqlite:C:/Users/N B C/Desktop/portfolio_value_engine/" + fileName;
-        try {
-            conn = DriverManager.getConnection(url);
-        } catch (SQLException e) {
-            System.out.println(e.getMessage());
-        }
-
-        String sql = "SELECT * FROM Options";
-        try {
-            Statement statement = conn.createStatement();
-            ResultSet resultSet = statement.executeQuery(sql);
-
-            // loop through the result set
-            while (resultSet.next()) {
-                System.out.println(resultSet.getInt("id") + "\t" +
-                        resultSet.getString("ticker") + "\t" +
-                        resultSet.getString("maturityDate") + "\t" +
-                        resultSet.getDouble("strikePrice") + "\t" +
-                        resultSet.getString("optionType") + "\t" +
-                        resultSet.getDouble("interestRate") + "\t" +
-                        resultSet.getDouble("volatility"));
-
-            }
-        } catch (
-                SQLException e) {
-            System.out.println(e.getMessage());
-        }
-    }
-
-    public static void deleteAllOptions(String fileName) {
-        String url = "jdbc:sqlite:C:/Users/N B C/Desktop/portfolio_value_engine/" + fileName;
-        try {
-            conn = DriverManager.getConnection(url);
-        } catch (SQLException e) {
-            System.out.println(e.getMessage());
-        }
-        String sql = "DELETE FROM Options";
-        try {
-            Statement statement = conn.createStatement();
-            statement.executeUpdate(sql);
-        } catch (SQLException e) {
-            System.out.println(e.getMessage());
-        }
-    }
-
 }
 
 

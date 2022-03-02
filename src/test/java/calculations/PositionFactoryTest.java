@@ -4,35 +4,40 @@ import instrument.Instrument;
 import instrument.Option;
 import instrument.OptionType;
 import instrument.Stock;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
+import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.time.Instant;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.HashMap;
+import java.util.Map;
 
+import static org.apache.commons.io.FileUtils.forceDelete;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 public class PositionFactoryTest {
+    public static final String POSITIONS_CSV = "Positions.csv";
     //TODO: user before to create dummy positions csv in tmp dir
-    private final InstantParser instantParserMock = mock(InstantParser.class);
-    private final Instant time = new InstantParser().getInstant("OCT", "2020");
-    private final Stock stock1 = new Stock("AAPL");
-    private final Stock stock2 = new Stock("TESLA");
-    private final Instrument instrument2 = new Option("AAPL", time, 110, OptionType.CALL, stock1);
-    private final Instrument instrument3 = new Option("TELSA", time, 400, OptionType.PUT, stock2);
-    private final Position position1 = new Position(1000, stock1);
-    private final Position position2 = new Position(-20000, instrument2);
-    private final Position position3 = new Position(-10000, instrument3);
+    private final Stock aapl_stock = new Stock("AAPL", 0);
+    private final Stock telsa_stock = new Stock("TELSA", 0);
+    private final Instrument aapl_call_option = new Option("AAPL-OCT-2020-110-C", Instant.now(), 110, OptionType.CALL, aapl_stock);
+    private final Instrument telsa_put_option = new Option("TELSA-DEC-2020-400-P", Instant.now(), 400, OptionType.PUT, telsa_stock);
+    private final Position position1 = new Position(1000, aapl_stock);
+    private final Position position2 = new Position(-20000, aapl_call_option);
+    private final Position position3 = new Position(-10000, telsa_put_option);
+
+    private final InstrumentDefinitionProvider instrumentDefinitionProvider = Mockito.mock(InstrumentDefinitionProvider.class);
 
     @BeforeAll
     public static void createDummyCSV() {
-        try (PrintWriter writer = new PrintWriter(("Positions.csv"))) {
+        try (PrintWriter writer = new PrintWriter(POSITIONS_CSV)) {
 
             String csvValues = "symbol,positionSize" + '\n' +
                     "AAPL,1000" +
@@ -49,16 +54,24 @@ public class PositionFactoryTest {
         }
     }
 
+    @AfterAll
+    static void removeTestFile() throws IOException {
+        forceDelete(new File(POSITIONS_CSV));
+    }
+
     @Test
     public void test_PositionFactory_readsCSV() {
-        when(this.instantParserMock.getInstant(anyString(), anyString())).thenReturn(time);
-        final PositionFactory positionFactory = new PositionFactory();
+        when(instrumentDefinitionProvider.getInstrumentByTicker("AAPL")).thenReturn(aapl_stock);
+        when(instrumentDefinitionProvider.getInstrumentByTicker("AAPL-OCT-2020-110-C")).thenReturn(aapl_call_option);
+        when(instrumentDefinitionProvider.getInstrumentByTicker("TELSA-DEC-2020-400-P")).thenReturn(telsa_put_option);
+        final PositionFactory positionFactory = new PositionFactory(instrumentDefinitionProvider);
         final Positions actualPositions = positionFactory.getPositions();
         assertEquals(actualPositions.getPositions().size(), 3);
-        Set<Position> expectedPositions = new HashSet<>();
-        expectedPositions.add(position1);
-        expectedPositions.add(position2);
-        expectedPositions.add(position3);
+        Map<String, Position> expectedPositions = new HashMap<>();
+        expectedPositions.put(position1.getInstrument().getTicker(), position1);
+        expectedPositions.put(position2.getInstrument().getTicker(), position2);
+        expectedPositions.put(position3.getInstrument().getTicker(), position3);
+
         assertEquals(expectedPositions, actualPositions.getPositions());
     }
 
