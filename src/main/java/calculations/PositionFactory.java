@@ -10,22 +10,24 @@ import java.util.Set;
 
 public class PositionFactory {
     private final InstrumentDefinitionProvider instrumentDefinitionProvider;
+    private final String positionFile;
 
-    public PositionFactory(InstrumentDefinitionProvider instrumentDefinitionProvider) {
+    public PositionFactory(InstrumentDefinitionProvider instrumentDefinitionProvider, String positionFile) {
         this.instrumentDefinitionProvider = instrumentDefinitionProvider;
+        this.positionFile = positionFile;
     }
 
 
-    public Positions getPositions() {
-        return new Positions(readPositions());
+    public Positions getPositions(String positionFile) {
+        return new Positions(readPositions(positionFile));
     }
 
-    private Set<Position> readPositions() {
+    private Set<Position> readPositions(String positionFile) {
         HashSet<Position> positionSet = new HashSet<>();
         BufferedReader br = null;
         try {
             String line;
-            br = new BufferedReader(new FileReader("Positions.csv"));
+            br = new BufferedReader(new FileReader(positionFile));
             br.readLine();
             while ((line = br.readLine()) != null) {
                 final String[] splitData = line.split(",");

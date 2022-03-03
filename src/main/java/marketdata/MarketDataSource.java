@@ -9,7 +9,7 @@ import java.util.concurrent.locks.LockSupport;
 import java.util.function.Consumer;
 
 public class MarketDataSource extends UnaryPubSub<Set<PriceUpdate>> {
-    public static final int HIGH = 400;
+    public static final int HIGH = 300;
     public static final int LOW = 200;
     public static final Random RANDOM_PRICE_GENERATOR = new Random();
     public final HashSet<PriceUpdate> priceUpdates = new HashSet<>();
@@ -25,17 +25,20 @@ public class MarketDataSource extends UnaryPubSub<Set<PriceUpdate>> {
     public void start() {
         for (int i = 0; i < 10; i++) {
             LockSupport.parkNanos(2000000000);
-            System.out.println("new market update");
+            System.out.println("New market update for below stock(s)");
             //Todo: every x seconds update
             update(stockPriceMovement());
         }
     }
+
     public HashSet<PriceUpdate> stockPriceMovement() {
         final ArrayList<String> tickers = instrumentDefinitionProvider.getAllStockTickers();
         tickers.forEach(t -> {
             PriceUpdate priceUpdate = new PriceUpdate(t, RANDOM_PRICE_GENERATOR.nextInt(HIGH - LOW) + LOW);
             priceUpdates.add(priceUpdate);
-            System.out.println(priceUpdate);//TODO; Remove this comment
+            String ticker = priceUpdate.getTicker();
+            double price = priceUpdate.getPrice();
+            System.out.printf("%-30.30s  %-30.30s%n", ticker, price);
         });
         return priceUpdates;
     }

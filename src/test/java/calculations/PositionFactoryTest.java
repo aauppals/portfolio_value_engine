@@ -23,7 +23,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 public class PositionFactoryTest {
-    public static final String POSITIONS_CSV = "Positions.csv";
+    public static final String TEST_POSITIONS_CSV = "TestPositions.csv";
     //TODO: user before to create dummy positions csv in tmp dir
     private final Stock aapl_stock = new Stock("AAPL", 0);
     private final Stock telsa_stock = new Stock("TELSA", 0);
@@ -37,7 +37,7 @@ public class PositionFactoryTest {
 
     @BeforeAll
     public static void createDummyCSV() {
-        try (PrintWriter writer = new PrintWriter(POSITIONS_CSV)) {
+        try (PrintWriter writer = new PrintWriter(TEST_POSITIONS_CSV)) {
 
             String csvValues = "symbol,positionSize" + '\n' +
                     "AAPL,1000" +
@@ -56,7 +56,7 @@ public class PositionFactoryTest {
 
     @AfterAll
     static void removeTestFile() throws IOException {
-        forceDelete(new File(POSITIONS_CSV));
+        forceDelete(new File(TEST_POSITIONS_CSV));
     }
 
     @Test
@@ -64,8 +64,8 @@ public class PositionFactoryTest {
         when(instrumentDefinitionProvider.getInstrumentByTicker("AAPL")).thenReturn(aapl_stock);
         when(instrumentDefinitionProvider.getInstrumentByTicker("AAPL-OCT-2020-110-C")).thenReturn(aapl_call_option);
         when(instrumentDefinitionProvider.getInstrumentByTicker("TELSA-DEC-2020-400-P")).thenReturn(telsa_put_option);
-        final PositionFactory positionFactory = new PositionFactory(instrumentDefinitionProvider);
-        final Positions actualPositions = positionFactory.getPositions();
+        final PositionFactory positionFactory = new PositionFactory(instrumentDefinitionProvider, TEST_POSITIONS_CSV);
+        final Positions actualPositions = positionFactory.getPositions(TEST_POSITIONS_CSV);
         assertEquals(actualPositions.getPositions().size(), 3);
         Map<String, Position> expectedPositions = new HashMap<>();
         expectedPositions.put(position1.getInstrument().getTicker(), position1);

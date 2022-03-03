@@ -9,8 +9,8 @@ import java.util.*;
 public class PortfolioValueEngine {
     public static void main(String[] args) throws IOException {
         final InstrumentDefinitionProvider instrumentDefinitionProvider = prepareDataBase();
-        final PositionFactory positionFactory = new PositionFactory(instrumentDefinitionProvider);
-        final Positions positions = positionFactory.getPositions();
+        final PositionFactory positionFactory = new PositionFactory(instrumentDefinitionProvider, "Positions.csv");
+        final Positions positions = positionFactory.getPositions("Positions.csv");
 
         final ConsolePortfolioValueListener consolePortfolioValueListener = new ConsolePortfolioValueListener();
         final PortfolioValueCalculator portfolioValueCalculator = new PortfolioValueCalculator(consolePortfolioValueListener, positions);
