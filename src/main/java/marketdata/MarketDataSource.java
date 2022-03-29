@@ -12,7 +12,7 @@ public class MarketDataSource extends UnaryPubSub<Set<PriceUpdate>> {
     public static final int HIGH = 300;
     public static final int LOW = 200;
     public static final Random RANDOM_PRICE_GENERATOR = new Random();
-    public final HashSet<PriceUpdate> priceUpdates = new HashSet<>();
+    public final Set<PriceUpdate> priceUpdates = new LinkedHashSet<>();
     private final Positions positions;
     private final InstrumentDefinitionProvider instrumentDefinitionProvider;
 
@@ -26,13 +26,13 @@ public class MarketDataSource extends UnaryPubSub<Set<PriceUpdate>> {
         for (int i = 0; i < 10; i++) {
             LockSupport.parkNanos(2000000000);
             System.out.println("New market update for below stock(s)");
-            //Todo: every x seconds update
             update(stockPriceMovement());
         }
     }
 
-    public HashSet<PriceUpdate> stockPriceMovement() {
+    public Set<PriceUpdate> stockPriceMovement() {
         final ArrayList<String> tickers = instrumentDefinitionProvider.getAllStockTickers();
+        priceUpdates.clear();
         tickers.forEach(t -> {
             PriceUpdate priceUpdate = new PriceUpdate(t, RANDOM_PRICE_GENERATOR.nextInt(HIGH - LOW) + LOW);
             priceUpdates.add(priceUpdate);

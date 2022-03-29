@@ -21,7 +21,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.when;
 
 public class PriceCalculatorTest {
-    private static final HashSet<PriceUpdate> priceUpdates = new HashSet<>();
+    private static final HashSet<PriceUpdate> priceUpdates = new LinkedHashSet<>();
 
     private static final Stock stock1 = new Stock("S1", 0.5);
     private static final Stock stock2 = new Stock("S2", 0.5);

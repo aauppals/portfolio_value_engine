@@ -4,6 +4,7 @@ import infra.UnaryPubSub;
 import marketdata.PriceUpdate;
 
 import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -20,8 +21,11 @@ public class PortfolioValueCalculator extends UnaryPubSub<Set<PortfolioValue>> i
 
     @Override
     public void accept(Set<PriceUpdate> priceUpdates) {
-        update(priceUpdates.stream().map(priceUpdate ->
-                new PortfolioValue(requireNonNull(positions.getPosition(priceUpdate.getTicker())).getInstrument(),
-                        priceUpdate.getPrice() * requireNonNull(positions.getPosition(priceUpdate.getTicker())).getAmount(), positions, priceUpdate.getPrice())).collect(Collectors.toSet()));
+        final Set<PortfolioValue> portfolioValueSet = new LinkedHashSet<>();
+        for (PriceUpdate priceUpdate : priceUpdates) {
+            portfolioValueSet.add(new PortfolioValue(requireNonNull(positions.getPosition(priceUpdate.getTicker())).getInstrument(),
+                    priceUpdate.getPrice() * requireNonNull(positions.getPosition(priceUpdate.getTicker())).getAmount(), positions, priceUpdate.getPrice()));
+        }
+        update(portfolioValueSet);
     }
 }

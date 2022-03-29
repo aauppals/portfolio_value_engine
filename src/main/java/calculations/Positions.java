@@ -5,7 +5,7 @@ import java.util.*;
 
 public class Positions {
 
-    private final Map<String, Position> positions = new HashMap<>();
+    private final Map<String, Position> positions = new LinkedHashMap<>();
 
     public Positions(final Set<Position> positionSet) {
         positionSet.forEach(p -> this.positions.put(p.getInstrument().getTicker(), p));

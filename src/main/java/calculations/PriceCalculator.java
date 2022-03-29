@@ -8,10 +8,7 @@ import marketdata.PriceUpdate;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Consumer;
 
 public class PriceCalculator extends UnaryPubSub<Set<PriceUpdate>> implements Consumer<Set<PriceUpdate>> {
@@ -29,13 +26,13 @@ public class PriceCalculator extends UnaryPubSub<Set<PriceUpdate>> implements Co
 
     @Override
     public void accept(Set<PriceUpdate> underlyingPriceUpdates) {
-        final Set<PriceUpdate> optionPriceUpdates = new HashSet<>();
+        final Set<PriceUpdate> optionPriceUpdates = new LinkedHashSet<>();
         underlyingPriceUpdates.forEach(priceUpdate -> optionPriceUpdates.addAll(calculatePrice(priceUpdate)));
         update(optionPriceUpdates);
     }
 
     private Set<PriceUpdate> calculatePrice(PriceUpdate underlyingPriceUpdate) {
-        Set<PriceUpdate> optionPriceUpdates = new HashSet<>();
+        Set<PriceUpdate> optionPriceUpdates = new LinkedHashSet<>();
         Position underlyingPosition = positions.getPosition(underlyingPriceUpdate.getTicker());
         if (underlyingPosition == null) {
             throw new IllegalArgumentException("No options found in positions for underlying: " + underlyingPriceUpdate.getTicker());

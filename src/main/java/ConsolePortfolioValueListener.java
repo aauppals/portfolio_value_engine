@@ -8,7 +8,6 @@ import java.util.function.Consumer;
 public class ConsolePortfolioValueListener implements Consumer<Set<PortfolioValue>> {
     @Override
     public void accept(Set<PortfolioValue> portfolioValueSet) {
-        //Todo: pretty print
         System.out.println("Portfolio Value updates:");
         System.out.printf("%-30.40s  %-30.40s %-30.40s %-30.40s%n", "symbol", "price", "qty", "Value");
         double portfolioTotalValue = 0;
@@ -17,6 +16,7 @@ public class ConsolePortfolioValueListener implements Consumer<Set<PortfolioValu
             double value = portfolioValue.getValue();
             Instrument instrument = portfolioValue.getInstrument();
             Position position = portfolioValue.getPositions().getPosition(ticker);
+            assert position != null;
             long amount = position.getAmount();
             double price = portfolioValue.getPrice();
             System.out.printf("%-30.40s  %-30.40s %-30.40s %-30.40s%n", instrument.getTicker(),

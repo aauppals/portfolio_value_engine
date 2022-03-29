@@ -6,6 +6,7 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 public class PositionFactory {
@@ -23,7 +24,7 @@ public class PositionFactory {
     }
 
     private Set<Position> readPositions(String positionFile) {
-        HashSet<Position> positionSet = new HashSet<>();
+        Set<Position> positionSet = new LinkedHashSet<>();
         BufferedReader br = null;
         try {
             String line;
