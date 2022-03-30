@@ -71,7 +71,7 @@ public class PriceCalculatorTest {
             assertEquals(PriceCalculatorTest.priceUpdates.size() + 1, priceUpdates.size());
             final List<PriceUpdate> actualPriceUpdate = extractActualOptionPrices(priceUpdates, singletonList("O1-C"));
             assertEquals(1, actualPriceUpdate.size());
-            assertEquals(0.09649, actualPriceUpdate.get(0).getPrice(), PRECISION_DECIMAL_PLACES);
+            assertEquals(0.0774, actualPriceUpdate.get(0).getPrice(), PRECISION_DECIMAL_PLACES);
         });
     }
 
@@ -94,7 +94,7 @@ public class PriceCalculatorTest {
             assertEquals(PriceCalculatorTest.priceUpdates.size() + 2, priceUpdates.size());
             final List<PriceUpdate> actualPriceUpdate = extractActualOptionPrices(priceUpdates, Arrays.asList("O1-C", "O1-P"));
             assertEquals(2, actualPriceUpdate.size());
-            assertEquals(0.0964, actualPriceUpdate.get(0).getPrice(), PRECISION_DECIMAL_PLACES);
+            assertEquals(0.0774, actualPriceUpdate.get(0).getPrice(), PRECISION_DECIMAL_PLACES);
             assertEquals(4.9307, actualPriceUpdate.get(1).getPrice(), PRECISION_DECIMAL_PLACES);
         });
     }
@@ -108,9 +108,20 @@ public class PriceCalculatorTest {
     private List<PriceUpdate> extractActualOptionPrices(final Set<PriceUpdate> actualPriceUpdates,
                                                         final List<String> optionTickers) {
         assertTrue(actualPriceUpdates.removeAll(PriceCalculatorTest.priceUpdates));
-        final Map<String, PriceUpdate> optionPriceMap = actualPriceUpdates.stream().collect(toMap(PriceUpdate::getTicker, priceUpdate -> priceUpdate));
+        final Map<String, PriceUpdate> optionPriceMap;
+        Map<String, PriceUpdate> map = new HashMap<>();
+        for (PriceUpdate priceUpdate : actualPriceUpdates) {
+            if (map.put(priceUpdate.getTicker(), priceUpdate) != null) {
+                throw new IllegalStateException("Duplicate key");
+            }
+        }
+        optionPriceMap = map;
         assertEquals(optionTickers.size(), optionPriceMap.size());
-        List<PriceUpdate> result = optionTickers.stream().map(optionPriceMap::get).collect(Collectors.toList());
+        List<PriceUpdate> result = new ArrayList<>();
+        for (String optionTicker : optionTickers) {
+            PriceUpdate priceUpdate = optionPriceMap.get(optionTicker);
+            result.add(priceUpdate);
+        }
         assertEquals(optionTickers.size(), result.size());
         return result;
     }

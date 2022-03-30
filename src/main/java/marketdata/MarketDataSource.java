@@ -25,7 +25,7 @@ public class MarketDataSource extends UnaryPubSub<Set<PriceUpdate>> {
     public void start() {
         for (int i = 0; i < 10; i++) {
             LockSupport.parkNanos(2000000000);
-            System.out.println("New market update for below stock(s)");
+            System.out.println("\n" + "New market update for below stocks");
             update(stockPriceMovement());
         }
     }

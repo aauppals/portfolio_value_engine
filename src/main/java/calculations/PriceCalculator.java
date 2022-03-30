@@ -12,7 +12,7 @@ import java.util.*;
 import java.util.function.Consumer;
 
 public class PriceCalculator extends UnaryPubSub<Set<PriceUpdate>> implements Consumer<Set<PriceUpdate>> {
-    static final double PRECISION_DECIMAL_PLACES = 0.001;
+    static final double PRECISION_DECIMAL_PLACES = 0.01;
     private static final double INTEREST_RATE = 0.02;
     private static final double NUMBER_OF_SECONDS_IN_YEAR = 365 * 24 * 60 * 60;
     private final InstrumentDefinitionProvider instrumentDefinitionProvider;
